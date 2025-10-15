@@ -1,0 +1,19 @@
+{
+  "name": "poc",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npx tsc --build && node ./dist/index.js",
+    "build": "npx tsc --build",
+    "classic": "npx tsc --build && node ./dist/swap/classic.js",
+    "psb": "npx tsc --build && node ./dist/swap/psb.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,3 @@
+- don't start app unless user connects wallet
+- dont start route finding unless user inputs secondary wallet address
+- verify secondary wallet address for validity using explorers? (optional)

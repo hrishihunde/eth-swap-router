@@ -6,6 +6,7 @@ import { Card } from '../ui/card';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Search, ChevronDown } from 'lucide-react';
+import { getAvailableTokens, getTokenInfo } from '../../lib/partners/pyth-feed';
 
 interface Token {
   token: string;
@@ -23,17 +24,59 @@ interface TokenSelectorProps {
   label: string;
 }
 
-// Mock token data - in a real app, this would come from an API
-const TOKENS: Token[] = [
-  { token: 'ETH', chain: 'ethereum', symbol: 'ETH', name: 'Ethereum', decimals: 18 },
-  { token: 'USDC', chain: 'ethereum', symbol: 'USDC', name: 'USD Coin', decimals: 6 },
-  { token: 'USDT', chain: 'ethereum', symbol: 'USDT', name: 'Tether USD', decimals: 6 },
-  { token: 'WETH', chain: 'ethereum', symbol: 'WETH', name: 'Wrapped Ethereum', decimals: 18 },
-  { token: 'DAI', chain: 'ethereum', symbol: 'DAI', name: 'Dai Stablecoin', decimals: 18 },
-  { token: 'WBTC', chain: 'ethereum', symbol: 'WBTC', name: 'Wrapped Bitcoin', decimals: 8 },
-  { token: 'MATIC', chain: 'polygon', symbol: 'MATIC', name: 'Polygon', decimals: 18 },
-  { token: 'AVAX', chain: 'avalanche', symbol: 'AVAX', name: 'Avalanche', decimals: 18 },
-];
+// Get tokens from Pyth feeds - only show tokens that have price feeds
+function getPythTokens(): Token[] {
+  const availableTokens = getAvailableTokens();
+  
+  return availableTokens.map(symbol => {
+    const tokenInfo = getTokenInfo(symbol);
+    if (!tokenInfo) return null;
+    
+    // Map symbols to their common names and chains
+    const tokenMap: Record<string, { name: string; chain: string; decimals: number }> = {
+      'ETH': { name: 'Ethereum', chain: 'ethereum', decimals: 18 },
+      'BTC': { name: 'Bitcoin', chain: 'ethereum', decimals: 8 },
+      'USDC': { name: 'USD Coin', chain: 'ethereum', decimals: 6 },
+      'USDT': { name: 'Tether USD', chain: 'ethereum', decimals: 6 },
+      'MATIC': { name: 'Polygon', chain: 'polygon', decimals: 18 },
+      'BNB': { name: 'Binance Coin', chain: 'bsc', decimals: 18 },
+      'SOL': { name: 'Solana', chain: 'solana', decimals: 9 },
+      'ARB': { name: 'Arbitrum', chain: 'arbitrum', decimals: 18 },
+      'AVAX': { name: 'Avalanche', chain: 'avalanche', decimals: 18 },
+      'AAVE': { name: 'Aave', chain: 'ethereum', decimals: 18 },
+      'UNI': { name: 'Uniswap', chain: 'ethereum', decimals: 18 },
+      'LINK': { name: 'Chainlink', chain: 'ethereum', decimals: 18 },
+      'LTC': { name: 'Litecoin', chain: 'ethereum', decimals: 8 },
+      'DOGE': { name: 'Dogecoin', chain: 'ethereum', decimals: 8 },
+      'BCH': { name: 'Bitcoin Cash', chain: 'ethereum', decimals: 8 },
+      'SHIB': { name: 'Shiba Inu', chain: 'ethereum', decimals: 18 },
+      'OP': { name: 'Optimism', chain: 'optimism', decimals: 18 },
+      'SAND': { name: 'The Sandbox', chain: 'ethereum', decimals: 18 },
+      'MANA': { name: 'Decentraland', chain: 'ethereum', decimals: 18 },
+      'CRV': { name: 'Curve DAO', chain: 'ethereum', decimals: 18 },
+      'SNX': { name: 'Synthetix', chain: 'ethereum', decimals: 18 },
+      'DYDX': { name: 'dYdX', chain: 'ethereum', decimals: 18 },
+      'COMP': { name: 'Compound', chain: 'ethereum', decimals: 18 },
+      'ENS': { name: 'Ethereum Name Service', chain: 'ethereum', decimals: 18 },
+      'RPL': { name: 'Rocket Pool', chain: 'ethereum', decimals: 18 },
+      'LDO': { name: 'Lido DAO', chain: 'ethereum', decimals: 18 },
+      'GRT': { name: 'The Graph', chain: 'ethereum', decimals: 18 },
+      'PEPE': { name: 'Pepe', chain: 'ethereum', decimals: 18 },
+    };
+    
+    const tokenData = tokenMap[symbol] || { name: symbol, chain: 'ethereum', decimals: 18 };
+    
+    return {
+      token: symbol,
+      chain: tokenData.chain,
+      symbol: symbol,
+      name: tokenData.name,
+      decimals: tokenData.decimals,
+    };
+  }).filter((token): token is Token => token !== null);
+}
+
+const TOKENS = getPythTokens();
 
 export default function TokenSelector({ selectedToken, onTokenSelect, label }: TokenSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);

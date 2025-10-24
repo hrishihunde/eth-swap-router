@@ -3,7 +3,7 @@
 import React from 'react';
 import { Input } from '../ui/input';
 import { Card } from '../ui/card';
-import TokenSelector from './tokenSelector';
+import TokenSelector from './TokenSelector';
 
 interface Token {
   token: string;

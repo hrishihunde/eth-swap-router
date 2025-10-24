@@ -1,18 +1,13 @@
-/* Swap Actions:
-    - switch between swap tokens
-    - execute swap button (link to contract + router)
-*/
-
 "use client";
 
 import React, { useState } from 'react';
 import { Button } from '../ui/button';
-import { Route } from '../../types/route';
+import { RouteComparison } from '../../lib/core/route-comparison';
 import { useAccount, useWriteContract } from 'wagmi';
 import { ArrowUpDown, Loader2 } from 'lucide-react';
 
 interface SwapActionsProps {
-  route: Route | null;
+  route: RouteComparison | null;
 }
 
 export default function SwapActions({ route }: SwapActionsProps) {
@@ -21,19 +16,18 @@ export default function SwapActions({ route }: SwapActionsProps) {
   const { writeContract } = useWriteContract();
 
   const handleSwap = async () => {
-    if (!route || !address) return; // improve logic for a different error message for no routes
+    if (!route || !address) return;
     
     setIsExecuting(true);
     try {
-      // TODO: Implement actual swap execution logic
-      // this would involve calling the appropriate smart contracts
-      // based on the route hops
-      console.log('Executing swap for route:', route);
+      // Use PSB route by default as it should be more efficient
+      const selectedRoute = route.psb.route;
+      console.log('Executing swap with PSB route:', selectedRoute);
       
-      // simulate swap execution
+      // Simulate swap execution
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // show success message
+      // Show success message
       alert('Swap executed successfully!');
     } catch (error) {
       console.error('Swap failed:', error);
@@ -52,6 +46,8 @@ export default function SwapActions({ route }: SwapActionsProps) {
     );
   }
 
+  const gasEstimate = route.psb.metrics.gasEstimate;
+
   return (
     <div className="flex flex-col space-y-2">
       <Button
@@ -68,13 +64,13 @@ export default function SwapActions({ route }: SwapActionsProps) {
         ) : (
           <>
             <ArrowUpDown className="w-4 h-4 mr-2" />
-            Execute Swap
+            Execute Swap (PSB Route)
           </>
         )}
       </Button>
       
       <div className="text-xs text-muted-foreground text-center">
-        Gas: ~${route.totalGasUSD.toFixed(2)}
+        Gas: ~${gasEstimate.toFixed(2)}
       </div>
     </div>
   );

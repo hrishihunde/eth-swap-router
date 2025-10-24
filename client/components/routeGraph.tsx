@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Route } from '@/types/route';
+import { Route } from '@/lib/types/route';
 
 interface RouteGraphProps {
   route?: Route | null;

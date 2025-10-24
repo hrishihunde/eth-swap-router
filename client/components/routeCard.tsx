@@ -1,6 +1,6 @@
 "use client";
 
-import { RouteHop } from '@/types/route';
+import { RouteHop } from '@/lib/types/route';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 

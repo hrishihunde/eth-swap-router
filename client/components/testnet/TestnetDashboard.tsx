@@ -1,27 +1,27 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
-  RefreshCw, 
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Progress } from '../ui/progress';
+import {
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  RefreshCw,
   ExternalLink,
   Network,
   DollarSign,
   Activity
 } from 'lucide-react';
-import { 
-  testnetTestSuite, 
-  runQuickTestnetCheck, 
+import {
+  testnetTestSuite,
+  runQuickTestnetCheck,
   getTestnetStatus,
-  TestnetTestResult 
-} from '@/lib/testnet-setup';
-import { TESTNET_CONFIGS } from '@/lib/testnet-config';
+  TestnetTestResult
+} from "../../lib/testnet/testnet-setup"
+import { TESTNET_CONFIGS } from '../../lib/testnet/testnet-config';
 
 export default function TestnetDashboard() {
   const [testResults, setTestResults] = useState<TestnetTestResult[]>([]);
@@ -88,8 +88,8 @@ export default function TestnetDashboard() {
               Last run: {lastRun.toLocaleTimeString()}
             </span>
           )}
-          <Button 
-            onClick={runTests} 
+          <Button
+            onClick={runTests}
             disabled={isRunning}
             className="flex items-center space-x-2"
           >

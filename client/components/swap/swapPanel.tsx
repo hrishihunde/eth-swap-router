@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import SwapInput from './swapInput';
-import SwapActions from './swapActions';
-import { useRouter } from '@/hooks/useRouter';
+import SwapActions from './SwapActions';
+import { useRouter } from '../../hooks/useRouter';
 import { useAccount, useConnect } from 'wagmi';
 import { Button } from '../ui/button';
 import { ArrowUpDown } from 'lucide-react';

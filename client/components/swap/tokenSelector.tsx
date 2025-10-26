@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Input } from '../ui/input';
-import { Badge } from '../ui/badge';
-import { Search, ChevronDown } from 'lucide-react';
-import { getAvailableTokens, getTokenInfo } from '../../lib/partners/pyth-feed';
+import React, { useState, useEffect } from "react";
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { X, Search, ChevronDown } from "lucide-react";
+import { getAvailableTokens, getTokenInfo } from '@/lib/partners/pyth-feed';
 
 interface Token {
   token: string;

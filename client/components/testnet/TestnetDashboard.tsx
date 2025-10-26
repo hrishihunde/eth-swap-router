@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Progress } from '../ui/progress';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import {
   CheckCircle,
   XCircle,
@@ -14,14 +14,14 @@ import {
   Network,
   DollarSign,
   Activity
-} from 'lucide-react';
+} from "lucide-react";
 import {
   testnetTestSuite,
   runQuickTestnetCheck,
   getTestnetStatus,
   TestnetTestResult
-} from "../../lib/testnet/testnet-setup"
-import { TESTNET_CONFIGS } from '../../lib/testnet/testnet-config';
+} from "@/lib/testnet/testnet-setup"
+import { TESTNET_CONFIGS } from '@/lib/testnet/testnet-config';
 
 export default function TestnetDashboard() {
   const [testResults, setTestResults] = useState<TestnetTestResult[]>([]);

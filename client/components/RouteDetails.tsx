@@ -1,6 +1,6 @@
 import { Badge } from './ui/badge';
 import { Card } from './ui/card';
-import { RouteComparison } from '../lib/core/route-comparison';
+import { RouteComparison } from '@/lib/core/route-comparison';
 
 interface RouteDetailsProps {
   comparison: RouteComparison;

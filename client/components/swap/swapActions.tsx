@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Button } from '../ui/button';
-import { RouteComparison } from '../../lib/core/route-comparison';
+import { Button } from '@/components/ui/button';
+import { RouteComparison } from '@/lib/core/route-comparison';
 import { useAccount, useWriteContract } from 'wagmi';
 import { ArrowUpDown, Loader2 } from 'lucide-react';
 

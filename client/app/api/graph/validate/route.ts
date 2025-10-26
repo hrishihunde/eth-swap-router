@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { buildRouteGraph, Vertex } from '@/lib/core/router';
-import { getAllTokens } from '@/lib/core/token-config';
+import { buildRouteGraph, Vertex } from "@/lib/core/router";
+import { getAllTokens } from "@/lib/core/token-config";
 
 function getSupportedVertices(): Vertex[] {
   const allTokens = getAllTokens();

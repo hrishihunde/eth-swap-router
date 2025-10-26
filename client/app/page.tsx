@@ -1,10 +1,10 @@
 "use client";
 
-import SwapPanel from '../components/swap/swapPanel';
-import { RouteCard } from '../components/routeCard';
-import { RouteGraph } from '../components/routeGraph';
-import TestnetDashboard from '../components/testnet/TestnetDashboard';
-import { useRouter } from '../hooks/useRouter';
+import SwapPanel from '@/components/swap/swapPanel';
+import { RouteCard } from '@/components/routeCard';
+import { RouteGraph } from '@/components/routeGraph';
+import TestnetDashboard from '@/components/testnet/TestnetDashboard';
+import { useRouter } from '@/hooks/useRouter';
 import { useAccount } from 'wagmi';
 import { useState } from 'react';
 

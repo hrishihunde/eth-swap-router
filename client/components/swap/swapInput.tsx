@@ -1,9 +1,9 @@
 "use client";
 
-import React from 'react';
-import { Input } from '../ui/input';
-import { Card } from '../ui/card';
-import TokenSelector from './TokenSelector';
+import React from "react";
+import { Input } from '@/components/ui/input';
+import { Card } from '@/components/ui/card';
+import TokenSelector from './tokenSelector';
 
 interface Token {
   token: string;

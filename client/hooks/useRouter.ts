@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import axios from 'axios';
-import { Route } from '../types/route';
+import { Route } from '@/lib/types/route';
 
 export function useRouter() {
   const [route, setRoute] = useState<Route | null>(null);

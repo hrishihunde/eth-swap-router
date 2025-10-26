@@ -1,6 +1,5 @@
 import { RouteGraph, TokenKey, Edge, Vertex } from './router';
 import { getTokenBalance } from '../partners/blockscout';
-import { getPriceRatio } from '../partners/pyth';
 
 interface SyntheticGraphOptions {
   targetEdgeCount: number;

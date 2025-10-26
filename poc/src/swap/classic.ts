@@ -5,7 +5,6 @@ import {
   RouteHop,
   RoutingResult,
   TOKENS,
-  PARTNER_CONFIG,
   fetchBlockscoutRate,
   fetchPythPrice,
   fetchAvailBridgeRate
@@ -14,7 +13,7 @@ import {
 export async function buildGraph(): Promise<Graph> {
   const graph: Graph = {};
 
-  console.log('Building routing graph with partner integrations...\n');
+  console.log('Building routing graph...\n');
 
   for (const token of TOKENS) {
     graph[token.id] = [];
@@ -80,19 +79,18 @@ export async function buildGraph(): Promise<Graph> {
   return graph;
 }
 
+type QueueItem = {
+  cost: number;
+  tokenId: string;
+  path: string[];
+  hops: RouteHop[];
+};
+
 export function classicDijkstra(
   graph: Graph,
   startTokenId: string,
   endTokenId: string
 ): RoutingResult | null {
-
-  type QueueItem = {
-    cost: number;
-    tokenId: string;
-    path: string[];
-    hops: RouteHop[];
-  };
-
   const queue: QueueItem[] = [{
     cost: 0,
     tokenId: startTokenId,
@@ -112,7 +110,7 @@ export function classicDijkstra(
     exploredPaths++;
 
     if (current.tokenId === endTokenId) {
-      console.log(`Classic Dijkstra explored ${exploredPaths} paths (no pruning)\n`);
+      console.log(`Classic explored ${exploredPaths} paths\n`);
 
       const totalRate = current.hops.reduce((acc, hop) => acc * hop.rate, 1);
 
@@ -153,7 +151,7 @@ export function classicDijkstra(
     }
   }
 
-  console.log(`Classic Dijkstra explored ${exploredPaths} paths - no route found\n`);
+  console.log(`Classic explored ${exploredPaths} paths - no route found\n`);
   return null;
 }
 
@@ -170,6 +168,7 @@ export function printRoutingResult(result: RoutingResult | null, title: string):
   console.log('\nROUTE PATH:');
   const pathStr = result.path.map(t => `${t.symbol} (${t.chain})`).join(' -> ');
   console.log(`   ${pathStr}\n`);
+  
   console.log('SWAP HOPS:');
   result.hops.forEach((hop, idx) => {
     console.log(`\n   Hop ${idx + 1}: ${hop.from.symbol} -> ${hop.to.symbol}`);
@@ -187,28 +186,24 @@ export function printRoutingResult(result: RoutingResult | null, title: string):
   const inputSymbol = result.path[0]?.symbol ?? 'N/A';
   const outputSymbol = result.path[result.path.length - 1]?.symbol ?? 'N/A';
   console.log(`   (For 1 ${inputSymbol}, you get ${result.totalRate.toFixed(6)} ${outputSymbol})`);
-  console.log(`\nTOTAL COST: ${result.totalCost.toFixed(6)} (lower is better)`);
+  console.log(`\nTOTAL COST: ${result.totalCost.toFixed(6)}`);
   console.log('\n' + '='.repeat(80) + '\n');
 }
 
 export async function runClassicRouter() {
-  console.log('\nCLASSIC DIJKSTRA SWAP ROUTER\n');
-  console.log('Partner Integrations:');
-  console.log('  - Blockscout: On-chain pool rates (fallback mode)');
-  console.log('  - Pyth: Oracle prices (fallback mode)');
-  console.log('  - Avail: Bridge simulation (simulated)\n');
+  console.log('\nCLASSIC DIJKSTRA ROUTER\n');
 
   const graph = await buildGraph();
 
   const scenarios = [
-    { from: 'eth-usdc', to: 'eth-weth', desc: 'Ethereum USDC -> WETH (same chain)' },
-    { from: 'eth-usdc', to: 'poly-wmatic', desc: 'Ethereum USDC -> Polygon WMATIC (cross-chain)' },
-    { from: 'poly-usdc', to: 'arb-weth', desc: 'Polygon USDC -> Arbitrum WETH (cross-chain)' },
+    { from: 'eth-usdc', to: 'eth-weth', desc: 'Ethereum USDC -> WETH' },
+    { from: 'eth-usdc', to: 'poly-wmatic', desc: 'Ethereum USDC -> Polygon WMATIC' },
+    { from: 'poly-usdc', to: 'arb-weth', desc: 'Polygon USDC -> Arbitrum WETH' },
   ];
 
   for (const scenario of scenarios) {
     console.log(`\nScenario: ${scenario.desc}\n`);
     const result = classicDijkstra(graph, scenario.from, scenario.to);
-    printRoutingResult(result, `CLASSIC DIJKSTRA: ${scenario.from} -> ${scenario.to}`);
+    printRoutingResult(result, `CLASSIC: ${scenario.from} -> ${scenario.to}`);
   }
 }

@@ -5,7 +5,6 @@ import {
   RouteHop, 
   RoutingResult,
   TOKENS,
-  PARTNER_CONFIG,
   fetchBlockscoutRate,
   fetchPythPrice,
   fetchAvailBridgeRate
@@ -14,48 +13,31 @@ import {
 import { printRoutingResult } from './classic';
 
 export const PSB_CONFIG = {
-  // Maximum number of hops allowed in a route
-  // Rationale: Most efficient swaps complete in 2-4 hops
   MAX_HOPS: 4,
-  
-  // Minimum cumulative rate to continue exploring a path
-  // Rationale: Prune paths that result in too much slippage
-  // NOTE: Many legitimate routes produce very small numeric outputs (e.g. WETH per USDC ~0.0005).
-  // Setting this too high will prune valid routes. Use a very small threshold instead.
   MIN_CUMULATIVE_RATE: 0.000001,
-  
-  // Maximum number of paths to explore before early termination
-  // Rationale: Bound computation time for real-time routing
   MAX_PATHS_EXPLORED: 1000,
-  
-  // Minimum edge rate to consider
-  // Rationale: Skip extremely unfavorable swaps
-  // NOTE: many rates are <1 (e.g. WETH per USDC ~0.0005). Use a small threshold
-  // so we don't accidentally filter valid low-magnitude exchange rates.
   MIN_EDGE_RATE: 0.0001,
-  
-  // Priority queue pruning: max queue size
-  // Rationale: Keep memory usage bounded
   MAX_QUEUE_SIZE: 500,
 };
 
 export async function buildGraphPSB(): Promise<Graph> {
   const graph: Graph = {};
-  console.log('Building routing graph with PSB optimizations...\n');
-
+  
+  console.log('Building PSB graph...\n');
+  
   for (const token of TOKENS) {
     graph[token.id] = [];
   }
-
+  
   for (const tokenA of TOKENS) {
     for (const tokenB of TOKENS) {
       if (tokenA.id === tokenB.id) continue;
-
+      
       let edge: Edge | null = null;
-
+      
       if (tokenA.chain === tokenB.chain) {
         const blockscoutData = await fetchBlockscoutRate(tokenA.chain, tokenA, tokenB);
-
+        
         if (blockscoutData.rate > 0 && blockscoutData.rate >= PSB_CONFIG.MIN_EDGE_RATE) {
           edge = {
             to: tokenB,
@@ -70,16 +52,16 @@ export async function buildGraphPSB(): Promise<Graph> {
         }
       } else {
         const availData = await fetchAvailBridgeRate(tokenA, tokenB);
-
+        
         if (availData.rate > 0) {
           const priceA = await fetchPythPrice(tokenA);
           const priceB = await fetchPythPrice(tokenB);
-
+          
           let effectiveRate = availData.rate;
           if (priceA.price > 0 && priceB.price > 0) {
             effectiveRate *= (priceA.price / priceB.price);
           }
-
+          
           if (effectiveRate >= PSB_CONFIG.MIN_EDGE_RATE) {
             edge = {
               to: tokenB,
@@ -98,36 +80,31 @@ export async function buildGraphPSB(): Promise<Graph> {
           }
         }
       }
-
+      
       if (edge && edge.rate > 0) {
         graph[tokenA.id]!.push(edge);
       }
     }
   }
-
-  console.log(`PSB Graph built with ${TOKENS.length} tokens (filtered low-rate edges)\n`);
+  
+  console.log(`PSB graph built with ${TOKENS.length} tokens\n`);
   return graph;
 }
 
-// ============================================================================
-// PSB-OPTIMIZED DIJKSTRA IMPLEMENTATION
-// ============================================================================
+type QueueItem = {
+  cost: number;
+  tokenId: string;
+  path: string[];
+  hops: RouteHop[];
+  hopCount: number;
+  cumulativeRate: number;
+};
 
 export function psbDijkstra(
   graph: Graph,
   startTokenId: string,
   endTokenId: string
 ): RoutingResult | null {
-  
-  type QueueItem = {
-    cost: number;
-    tokenId: string;
-    path: string[];
-    hops: RouteHop[];
-    hopCount: number;          // PSB: Track hop count
-    cumulativeRate: number;    // PSB: Track cumulative rate for pruning
-  };
-  
   const queue: QueueItem[] = [{
     cost: 0,
     tokenId: startTokenId,
@@ -147,30 +124,30 @@ export function psbDijkstra(
   
   while (queue.length > 0) {
     queue.sort((a, b) => a.cost - b.cost);
-
+    
     if (queue.length > PSB_CONFIG.MAX_QUEUE_SIZE) {
       const pruned = queue.length - PSB_CONFIG.MAX_QUEUE_SIZE;
       queue.splice(PSB_CONFIG.MAX_QUEUE_SIZE);
       prunedByQueueLimit += pruned;
     }
-
+    
     const current = queue.shift()!;
     exploredPaths++;
-
+    
     if (exploredPaths > PSB_CONFIG.MAX_PATHS_EXPLORED) {
-      console.log(`PSB early termination: reached ${PSB_CONFIG.MAX_PATHS_EXPLORED} paths limit\n`);
+      console.log(`PSB early termination at ${PSB_CONFIG.MAX_PATHS_EXPLORED} paths\n`);
       break;
     }
-
+    
     if (current.tokenId === endTokenId) {
-      console.log(`PSB Dijkstra explored ${exploredPaths} paths`);
-      console.log(`  ├─ Pruned by hop limit: ${prunedByHops}`);
-      console.log(`  ├─ Pruned by rate threshold: ${prunedByRate}`);
-      console.log(`  └─ Pruned by queue limit: ${prunedByQueueLimit}`);
+      console.log(`PSB explored ${exploredPaths} paths`);
+      console.log(`  ├─ Pruned by hops: ${prunedByHops}`);
+      console.log(`  ├─ Pruned by rate: ${prunedByRate}`);
+      console.log(`  └─ Pruned by queue: ${prunedByQueueLimit}`);
       console.log(`  Total pruned: ${prunedByHops + prunedByRate + prunedByQueueLimit}\n`);
-
+      
       const totalRate = current.hops.reduce((acc, hop) => acc * hop.rate, 1);
-
+      
       return {
         path: current.path.map(id => TOKENS.find(t => t.id === id)!),
         hops: current.hops,
@@ -178,32 +155,32 @@ export function psbDijkstra(
         totalCost: current.cost
       };
     }
-
+    
     if (visited.has(current.tokenId)) continue;
     visited.add(current.tokenId);
-
+    
     const edges = graph[current.tokenId] || [];
     for (const edge of edges) {
       const nextTokenId = edge.to.id;
       const newCost = current.cost + edge.weight;
       const newHopCount = current.hopCount + 1;
       const newCumulativeRate = current.cumulativeRate * edge.rate;
-
+      
       if (newHopCount > PSB_CONFIG.MAX_HOPS) {
         prunedByHops++;
         continue;
       }
-
+      
       if (newCumulativeRate < PSB_CONFIG.MIN_CUMULATIVE_RATE) {
         prunedByRate++;
         continue;
       }
-
+      
       if (!costs[nextTokenId] || newCost < costs[nextTokenId]) {
         costs[nextTokenId] = newCost;
-
+        
         const fromToken = TOKENS.find(t => t.id === current.tokenId)!;
-
+        
         queue.push({
           cost: newCost,
           tokenId: nextTokenId,
@@ -221,37 +198,32 @@ export function psbDijkstra(
       }
     }
   }
-
-  console.log(`PSB Dijkstra explored ${exploredPaths} paths - no route found`);
+  
+  console.log(`PSB explored ${exploredPaths} paths - no route found`);
   console.log(`  Pruned: ${prunedByHops + prunedByRate + prunedByQueueLimit} paths\n`);
   return null;
 }
 
 export async function runPSBRouter() {
-  console.log('\nPSB-OPTIMIZED DIJKSTRA SWAP ROUTER\n');
+  console.log('\nPSB-OPTIMIZED DIJKSTRA ROUTER\n');
   console.log('Optimizations:');
   console.log(`  • Max Hops: ${PSB_CONFIG.MAX_HOPS}`);
-  console.log(`  • Min Cumulative Rate: ${PSB_CONFIG.MIN_CUMULATIVE_RATE * 100}%`);
-  console.log(`  • Max Paths Explored: ${PSB_CONFIG.MAX_PATHS_EXPLORED}`);
-  console.log(`  • Min Edge Rate: ${PSB_CONFIG.MIN_EDGE_RATE * 100}%`);
-  console.log(`  • Max Queue Size: ${PSB_CONFIG.MAX_QUEUE_SIZE}\n`);
-  
-  console.log('Partner Integrations:');
-  console.log('  • Blockscout: On-chain pool rates (fallback mode)');
-  console.log('  • Pyth: Oracle prices (fallback mode)');
-  console.log('  • Avail: Bridge simulation (simulated)\n');
+  console.log(`  • Min Cumulative Rate: ${PSB_CONFIG.MIN_CUMULATIVE_RATE}`);
+  console.log(`  • Max Paths: ${PSB_CONFIG.MAX_PATHS_EXPLORED}`);
+  console.log(`  • Min Edge Rate: ${PSB_CONFIG.MIN_EDGE_RATE}`);
+  console.log(`  • Max Queue: ${PSB_CONFIG.MAX_QUEUE_SIZE}\n`);
   
   const graph = await buildGraphPSB();
   
   const scenarios = [
-    { from: 'eth-usdc', to: 'eth-weth', desc: 'Ethereum USDC → WETH (same chain)' },
-    { from: 'eth-usdc', to: 'poly-wmatic', desc: 'Ethereum USDC → Polygon WMATIC (cross-chain)' },
-    { from: 'poly-usdc', to: 'arb-weth', desc: 'Polygon USDC → Arbitrum WETH (cross-chain)' },
+    { from: 'eth-usdc', to: 'eth-weth', desc: 'Ethereum USDC -> WETH' },
+    { from: 'eth-usdc', to: 'poly-wmatic', desc: 'Ethereum USDC -> Polygon WMATIC' },
+    { from: 'poly-usdc', to: 'arb-weth', desc: 'Polygon USDC -> Arbitrum WETH' },
   ];
   
   for (const scenario of scenarios) {
     console.log(`\nScenario: ${scenario.desc}\n`);
     const result = psbDijkstra(graph, scenario.from, scenario.to);
-    printRoutingResult(result, `PSB DIJKSTRA: ${scenario.from} -> ${scenario.to}`);
+    printRoutingResult(result, `PSB: ${scenario.from} -> ${scenario.to}`);
   }
 }
